@@ -80,6 +80,19 @@ El proyecto incluye un video explicativo donde se describe el funcionamiento del
 
 Proyecto académico desarrollado como parte del módulo de **Programación Orientada a Objetos**.
 
+Autores del SnakeParce:
+Viafara Marchena, Andres Eduardo
+Jorge Daniel Riaño Rincon
+
+
+Autor del codigo fuente: 
+
+Kenny Yip. (s. f.). How to code a snake game in Java for beginners! YouTube. https://youtu.be/Y62MJny9LHg
+
+Repositorio Original:
+Kenny Yip. (s. f.). Snake game in Java. GitHub. https://github.com/ImKennyYip/snake-java
+
+
 ---
 
 ## 🇨🇴 ParceSnake
