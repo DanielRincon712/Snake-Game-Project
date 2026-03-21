@@ -62,8 +62,11 @@ El proyecto incluye un video explicativo donde se describe el funcionamiento del
 Proyecto académico desarrollado como parte del módulo de **Programación Orientada a Objetos**.
 
 Autores del SnakeParce:
+
 Viafara Marchena, Andres Eduardo
+
 Jorge Daniel Riaño Rincon
+
 Julian Andres Cardozo
 
 
