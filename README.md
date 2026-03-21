@@ -64,6 +64,8 @@ Proyecto académico desarrollado como parte del módulo de **Programación Orien
 Autores del SnakeParce:
 Viafara Marchena, Andres Eduardo
 Jorge Daniel Riaño Rincon
+Julian Andres Cardozo
+
 
 
 Autor del codigo fuente: 
