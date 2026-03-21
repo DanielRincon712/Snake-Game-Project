@@ -33,25 +33,6 @@ Este proyecto fue desarrollado aplicando:
 * Lógica de colisiones
 * Ciclo de juego con `Timer`
 
----
-
-## 📁 Estructura del repositorio
-
-```
-ParceSnake/
-│
-├── version-base/
-│   ├── App.java
-│   └── SnakeGame.java
-│
-├── version-mejorada/
-│   ├── App.java
-│   └── SnakeGame.java
-│
-└── README.md
-```
-
----
 
 ## 🚀 Versiones del proyecto
 
