@@ -1,16 +1,12 @@
 package game;
 
-import java.awt.*; // Librerías para gráficos (dibujar en pantalla)
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener; // Para el Timer (loop del juego)
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener; // Para detectar teclado
-import java.util.ArrayList; // Lista dinámica (cuerpo de la serpiente)
-import java.util.Random; // Para posiciones aleatorias de la comida
-import javax.swing.*; // Componentes gráficos (JPanel, Timer, etc.)
-import game.Snake;
-import game.Snake.Tile;
-import game.Food;
+import game.Snake.Tile; // Librerías para gráficos (dibujar en pantalla)
+import java.awt.*;
+import java.awt.event.ActionEvent; // Para el Timer (loop del juego)
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent; // Para detectar teclado
+import java.awt.event.KeyListener; // Lista dinámica (cuerpo de la serpiente)
+import javax.swing.*; // Para posiciones aleatorias de la comida
 
 public class SnakeGame extends JPanel implements ActionListener, KeyListener {
 
@@ -31,6 +27,10 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
     int velocityX; // Dirección horizontal
     int velocityY; // Dirección vertical
     boolean gameOver = false; // Estado del juego
+    static int highScore = 0; // 'static' hace que el récord NO se borre al reiniciar la partida. Solo se resetea cuando cierras el programa completamente.
+    int newRecordTimer = 0; // Contador de ticks para mostrar el mensaje de récord
+    static boolean isFirstGame = true;  // Controla si es la primera partida
+    boolean recordBrokenThisGame = false; // Si ya se mostró el mensaje esta partida
 
     // Constructor: inicializa todo el juego
     public SnakeGame(int AnchoTablero, int AlturaTablero) {
@@ -64,59 +64,109 @@ public class SnakeGame extends JPanel implements ActionListener, KeyListener {
 
     public void draw(Graphics g) {
 
-    //  Fondo (negro elegante)
+    // ── Fondo negro ──────────────────────────────────────────────
     g.setColor(Color.black);
     g.fillRect(0, 0, AnchoTablero, AlturaTablero);
 
-    //  Comida (rojo)
+    // ── Comida (rojo) ─────────────────────────────────────────────
     g.setColor(Color.red);
     g.fill3DRect(food.x * tileSize, food.y * tileSize, tileSize, tileSize, true);
 
-    //  Cabeza (amarillo - bandera Colombia)
+    // ── Cabeza de la serpiente (amarillo Colombia) ────────────────
     g.setColor(Color.yellow);
     g.fill3DRect(snake.head.x * tileSize, snake.head.y * tileSize, tileSize, tileSize, true);
 
+    // ── Cuerpo con colores de la bandera colombiana ───────────────
     for (int i = 0; i < snake.body.size(); i++) {
-    Tile snakePart = snake.body.get(i);
-
-    // Alternar colores tipo bandera Colombia
-    if (i % 3 == 0) {
-        g.setColor(Color.yellow); // Amarillo
-    } else if (i % 3 == 1) {
-        g.setColor(Color.blue); // Azul
-    } else {
-        g.setColor(Color.red); // Rojo
+        Tile snakePart = snake.body.get(i);
+        if (i % 3 == 0) {
+            g.setColor(Color.yellow);
+        } else if (i % 3 == 1) {
+            g.setColor(Color.blue);
+        } else {
+            g.setColor(Color.red);
+        }
+        g.fill3DRect(snakePart.x * tileSize, snakePart.y * tileSize, tileSize, tileSize, true);
     }
 
-    g.fill3DRect(snakePart.x * tileSize, snakePart.y * tileSize, tileSize, tileSize, true);
-    }
 
-    //  PUNTAJE (arriba centrado)
+    // ── Puntaje actual (lado izquierdo) 
+    // Muestra cuántos segmentos tiene la serpiente en este momento.
     g.setColor(Color.white);
-    g.setFont(new Font("Arial", Font.BOLD, 20));
+    g.setFont(new Font("Arial", Font.BOLD, 22));
+    g.drawString("Puntaje: " + snake.body.size(), 10, 30);
 
-    String scoreText = "Puntaje: " + snake.body.size();
-    int scoreWidth = g.getFontMetrics().stringWidth(scoreText);
+    // ── High Score (lado derecho)
+    // Muestra el mejor puntaje alcanzado en la sesión actual.
+    // El texto se alinea al margen derecho calculando su ancho con FontMetrics.
+   // Si en esta partida ya se rompió el récord, muestra "Nuevo Récord" en dorado parpadeante
+    // Si no, muestra "Récord" normal
+    String labelRecord = recordBrokenThisGame ? "Nuevo Record: " : "Record: ";
 
-    g.drawString(scoreText, (AnchoTablero - scoreWidth) / 2, 25);
+    String highScoreText = labelRecord + highScore;
+    int highScoreWidth = g.getFontMetrics().stringWidth(highScoreText);
 
-    //  GAME OVER + MENSAJE 
+    g.setColor(Color.black); // Sombra
+    g.drawString(highScoreText, AnchoTablero - highScoreWidth - 8, 32);
+    g.setColor(recordBrokenThisGame ? new Color(255, 215, 0) : Color.white); // Dorado si es nuevo récord
+    g.drawString(highScoreText, AnchoTablero - highScoreWidth - 10, 30);
+    
+    // MENSAJE DE HIGH SCORE BATIDO
+    // muestra un mensaje de celebración debajo de la barra superior.
+   // Muestra el mensaje solo si el timer está activo (récord recién superado)
+    if (newRecordTimer > 0) {
+    g.setColor(new Color(255, 215, 0));
+    g.setFont(new Font("Arial", Font.BOLD, 14));
+    String newRecord = "NUEVO RECORD PARCE!";
+    int newRecordWidth = g.getFontMetrics().stringWidth(newRecord);
+    g.drawString(newRecord, (AnchoTablero - newRecordWidth) / 2, 62);
+    }
+
+    // ============================================================
+    // PANTALLA DE GAME OVER
+    // ============================================================
     if (gameOver) {
-        g.setColor(Color.red);
-        g.setFont(new Font("Arial", Font.BOLD, 40));
+        // Overlay semitransparente para oscurecer el fondo
+        g.setColor(new Color(0, 0, 0, 180));
+        g.fillRect(0, 0, AnchoTablero, AlturaTablero);
 
+        // ── Texto GAME OVER ──────────────────────────────────────
+        g.setColor(Color.red);
+        g.setFont(new Font("Arial", Font.BOLD, 45));
         String gameOverText = "GAME OVER PARCE";
         int textWidth = g.getFontMetrics().stringWidth(gameOverText);
-        g.drawString(gameOverText, (AnchoTablero - textWidth) / 2, AlturaTablero / 2 - 20);
+        g.drawString(gameOverText, (AnchoTablero - textWidth) / 2, AlturaTablero / 2 - 50);
 
-        // Mensaje de reinicio
-        g.setFont(new Font("Arial", Font.PLAIN, 18));
+        // ── Puntaje final ────────────────────────────────────────
         g.setColor(Color.white);
+        g.setFont(new Font("Arial", Font.BOLD, 26));
+        String finalScore = "Puntaje: " + snake.body.size();
+        int finalScoreWidth = g.getFontMetrics().stringWidth(finalScore);
+        g.drawString(finalScore, (AnchoTablero - finalScoreWidth) / 2, AlturaTablero / 2);
 
+        // ── High Score en la pantalla de Game Over ───────────────
+        // Si el jugador acaba de batir el récord, se resalta en dorado.
+        // Si no, se muestra en blanco normal.
+        if (snake.body.size() == highScore && highScore > 0) {
+            g.setColor(new Color(255, 215, 0)); // Dorado: ¡batiste el récord!
+            g.setFont(new Font("Arial", Font.BOLD, 22));
+            String recordText = "🏆 ¡Nuevo Récord: " + highScore + "!";
+            int recordWidth = g.getFontMetrics().stringWidth(recordText);
+            g.drawString(recordText, (AnchoTablero - recordWidth) / 2, AlturaTablero / 2 + 35);
+        } else {
+            g.setColor(new Color(255, 215, 0));
+            g.setFont(new Font("Arial", Font.PLAIN, 20));
+            String recordText = "Récord: " + highScore;
+            int recordWidth = g.getFontMetrics().stringWidth(recordText);
+            g.drawString(recordText, (AnchoTablero - recordWidth) / 2, AlturaTablero / 2 + 35);
+        }
+
+        // ── Instrucción de reinicio ───────────────────────────────
+        g.setColor(Color.lightGray);
+        g.setFont(new Font("Arial", Font.PLAIN, 17));
         String restartText = "Presiona R o ENTER para volver a jugar";
         int restartWidth = g.getFontMetrics().stringWidth(restartText);
-
-        g.drawString(restartText, (AnchoTablero - restartWidth) / 2, AlturaTablero / 2 + 20);
+        g.drawString(restartText, (AnchoTablero - restartWidth) / 2, AlturaTablero / 2 + 70);
     }
 }
 
@@ -137,7 +187,22 @@ public boolean collision(Snake.Tile a, Food b) {
         if (collision(snake.head, food)) {
         snake.grow(food.x, food.y);
         food.placeFood();
-}
+
+        
+   // Solo actualiza el highScore y lanza el mensaje si NO es la primera partida
+    if (!isFirstGame && snake.body.size() > highScore) {
+        highScore = snake.body.size();
+
+        // El mensaje solo salta UNA VEZ por partida
+        if (!recordBrokenThisGame) {
+            newRecordTimer = 50; // 5 segundos
+            recordBrokenThisGame = true;
+        }
+        // Si ya se mostró el mensaje, solo actualiza el número en silencio
+    }
+    
+    }
+
 
         // Movimiento del cuerpo (de atrás hacia adelante)
         for (int i = snake.body.size() - 1; i >= 0; i--) {
@@ -173,6 +238,10 @@ public boolean collision(Snake.Tile a, Food b) {
             snake.head.y * tileSize < 0 || snake.head.y * tileSize > AlturaTablero) {
             gameOver = true;
         }
+
+        if  (newRecordTimer > 0) { // Reduce el contador del mensaje de récord cada tick
+        newRecordTimer--;
+    }
     }
 
     // Método que se ejecuta cada vez que el Timer hace "tick"
@@ -183,6 +252,12 @@ public boolean collision(Snake.Tile a, Food b) {
 
         if (gameOver) {
             gameLoop.stop(); // Detiene el juego
+
+            // Al morir: si era la primera partida, guarda ese puntaje como récord base
+        if (isFirstGame) {
+            highScore = snake.body.size();
+            isFirstGame = false; // Ya no es la primera partida nunca más
+        }
         }
     }
 
@@ -197,6 +272,9 @@ public boolean collision(Snake.Tile a, Food b) {
     gameOver = false; // Quita game over
 
     food.placeFood(); // Nueva comida
+
+    newRecordTimer = 0; // apaga el mensaje al reiniciar
+    recordBrokenThisGame = false; // ← Permite que el mensaje pueda salir una vez más
 
     gameLoop.start(); // Reinicia el loop
     }
